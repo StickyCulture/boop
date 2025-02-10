@@ -84,7 +84,7 @@ public class Boop {
             "label": label ?? NSNull(),
             "value": value ?? NSNull(),
             "instance": self.instance,
-            "timestamp": FieldValue.serverTimestamp()
+            "timestamp": Date()
         ]
         
         let log = Logger(subsystem: logSubsystem, category: "trackEvent")
