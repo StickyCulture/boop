@@ -21,7 +21,7 @@ public class Boop {
     public var isDisabled: Bool
     /// If `true`, disables the booping of sessions (including those that might be automatically booped based on other event activity)
     public var isSessionTrackingDisabled: Bool
-
+    
     /// Set this value to automatically subtract the duration of an inactivity timeout when booping sessions. Defaults to `0`.
     public var sessionTimeout: TimeInterval
     /// This value is internally flipped during the very first user-initiated event in order to ensure the first session (after app launch) includes a starting boop.
@@ -45,7 +45,7 @@ public class Boop {
         
         let app = FirebaseApp.app()
         if app == nil {
-            print("Firebase has not been configured yet. Configuring...")
+            log.notice("Firebase has not been configured yet. Configuring...")
             if let options = FirebaseOptions(contentsOfFile: filePath) {
                 FirebaseApp.configure(options: options)
                 log.notice("Firebase has been configured with \(filePath)")
@@ -54,7 +54,7 @@ public class Boop {
                 log.notice("Firebase has been configured with default settings")
             }
         }
-
+        
         self.db = Firestore.firestore()
         self.application = application
         self.isDevelopment = isDevelopment
@@ -69,7 +69,7 @@ public class Boop {
         if self.isDisabled {
             return nil
         }
-
+        
         if !self.isSessionTrackingDisabled,
            !self.didSessionStart,
            isUserInitiated,
@@ -84,7 +84,7 @@ public class Boop {
             "label": label ?? NSNull(),
             "value": value ?? NSNull(),
             "instance": self.instance,
-            "timestamp": FieldValue.serverTimestamp()
+            "timestamp": Date()
         ]
         
         let log = Logger(subsystem: logSubsystem, category: "trackEvent")
@@ -100,7 +100,7 @@ public class Boop {
         }
         return ref
     }
-
+    
     public func trackAppLaunch(label: String? = nil, value: String? = nil) -> DocumentReference? {
         self.sessionStart = Date()
         return self.trackEvent(event: "App Launch", label: label, value: value, isUserInitiated: false)
@@ -130,12 +130,12 @@ public class Boop {
         if !self.didSessionStart {
             return nil
         }
-
+        
         var label = "Session Duration in Milliseconds"
         if self.sessionTimeout > 0 {
             label += " (minus Timeout delay)"
         }
-
+        
         var value = 0
         if let sessionStart = self.sessionStart {
             value = Int((Date().timeIntervalSince(sessionStart) - self.sessionTimeout) * 1000)
