@@ -19,7 +19,7 @@ final class BoopTests: XCTestCase {
                 instance: "xcode-test",
                 isDevelopment: true,
                 isDisabled: false,
-                firebasePlistPath: path
+                firebaseConfigPath: path
             )
         }
     }
