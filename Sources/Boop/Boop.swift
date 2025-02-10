@@ -45,7 +45,7 @@ public class Boop {
         
         let app = FirebaseApp.app()
         if app == nil {
-            print("Firebase has not been configured yet. Configuring...")
+            log.notice("Firebase has not been configured yet. Configuring...")
             if let options = FirebaseOptions(contentsOfFile: filePath) {
                 FirebaseApp.configure(options: options)
                 log.notice("Firebase has been configured with \(filePath)")
