@@ -1,4 +1,5 @@
 import XCTest
+import FirebaseFirestore
 @testable import Boop
 
 var TEST: Boop? = nil
@@ -22,6 +23,10 @@ final class BoopTests: XCTestCase {
                 firebaseConfigPath: path
             )
         }
+        let settings = FirestoreSettings()
+        settings.cacheSettings = MemoryCacheSettings()
+        Firestore.firestore().settings = settings
+        Firestore.firestore().clearPersistence()
     }
     
     func testEvent() async throws {
