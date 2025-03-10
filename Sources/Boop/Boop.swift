@@ -25,7 +25,6 @@ public class Boop {
     ///
     /// Defaults to `true` meaning the session start events are sent to Firebase. If `false`, you should still call ``trackSessionStart()`` in order to get a recording of the session duration when ``trackSessionStop()`` is called.
     public var isSendingSessionStartEvents: Bool
-    
     /// Set this value to automatically subtract the duration of an inactivity timeout when booping sessions. Defaults to `0`.
     public var sessionTimeout: TimeInterval
     /// This value is internally flipped during the very first user-initiated event in order to ensure the first session (after app launch) includes a starting boop.
@@ -33,6 +32,14 @@ public class Boop {
     /// You can enable it immediately after instantiating Boop in order to prevent this "first session start" behavior. Disabling session boops with ``isSessionTrackingDisabled`` will also prevent the "first session start" behavior.
     public var didSessionStart: Bool
     private var sessionStart: Date?
+    /// The current time (in seconds) since the start of the session, or `0`
+    public var currentSessionDuration: TimeInterval {
+        var value: TimeInterval = 0
+        if self.didSessionStart, let sessionStart = self.sessionStart {
+            value = Date().timeIntervalSince(sessionStart) - self.sessionTimeout
+        }
+        return value
+    }
     private var sessionId: UUID?
     private let logSubsystem: String = "tv.sticky.boop"
     
@@ -157,11 +164,7 @@ public class Boop {
             label += " (minus Timeout delay)"
         }
         
-        var value = 0
-        if let sessionStart = self.sessionStart {
-            value = Int((Date().timeIntervalSince(sessionStart) - self.sessionTimeout) * 1000)
-        }
-        
+        let value = Int(self.currentSessionDuration * 1000)
         return self.trackEvent(event: "Session Stop", label: label, value: value, isUserInitiated: false)
     }
 }

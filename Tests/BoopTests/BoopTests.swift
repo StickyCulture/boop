@@ -144,7 +144,7 @@ final class BoopTests: XCTestCase {
         let stopData = stopDoc.data()
         XCTAssertNotNil(stopData)
         let stopId = stopData?["sessionId"] as? String
-
+        
         // make sure start and stop ids are the same
         XCTAssertEqual(startId, stopId)
         
@@ -194,5 +194,32 @@ final class BoopTests: XCTestCase {
         
         let stopRef = TEST?.trackSessionStop()
         XCTAssertNil(stopRef)
+    }
+    
+    func testSessionDuration() async throws {
+        TEST?.isSessionTrackingDisabled = false
+        let startRef = TEST?.trackSessionStart()
+        XCTAssertNotNil(startRef)
+        
+        XCTAssertNotNil(TEST?.currentSessionDuration)
+        XCTAssertLessThan(TEST?.currentSessionDuration ?? 0, 1.0)
+        
+        // Wait for 1 second
+        try await Task.sleep(until: .now + .seconds(1.0))
+        
+        XCTAssertGreaterThanOrEqual(TEST?.currentSessionDuration ?? 0, 1.0)
+        
+        let stopRef = TEST?.trackSessionStop()
+        XCTAssertNotNil(stopRef)
+        
+        let document = try await stopRef!.getDocument()
+        XCTAssertNotNil(document)
+        let data = document.data()
+        XCTAssertNotNil(data)
+        
+        // Check session duration in milliseconds from the document
+        let durationMs = data?["value"] as? Double
+        XCTAssertNotNil(durationMs)
+        XCTAssertGreaterThanOrEqual(durationMs ?? 0, 1000.0)
     }
 }
