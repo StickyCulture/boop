@@ -79,6 +79,14 @@ final class BoopTests: XCTestCase {
         XCTAssertEqual("Session Start", outputEvent)
     }
     
+    func testSessionStartSilent() async throws {
+        TEST?.isSendingSessionStartEvents = false
+        TEST?.isSessionTrackingDisabled = false
+        TEST?.didSessionStart = false
+        let ref = TEST?.trackSessionStart()
+        XCTAssertNil(ref)
+    }
+    
     func testSessionStop() async throws {
         TEST?.isSessionTrackingDisabled = false
         TEST?.didSessionStart = true

@@ -21,6 +21,10 @@ public class Boop {
     public var isDisabled: Bool
     /// If `true`, disables the booping of sessions (including those that might be automatically booped based on other event activity)
     public var isSessionTrackingDisabled: Bool
+    /// Toggles whether or not to actually send "Session Start" events to Firebase
+    ///
+    /// Defaults to `true` meaning the session start events are sent to Firebase. If `false`, you should still call ``trackSessionStart()`` in order to get a recording of the session duration when ``trackSessionStop()`` is called.
+    public var isSendingSessionStartEvents: Bool
     
     /// Set this value to automatically subtract the duration of an inactivity timeout when booping sessions. Defaults to `0`.
     public var sessionTimeout: TimeInterval
@@ -31,7 +35,15 @@ public class Boop {
     private var sessionStart: Date?
     private let logSubsystem: String = "tv.sticky.boop"
     
-    public init(application: String, instance: String = "default", isDevelopment: Bool = true, isDisabled: Bool = true, isSessionTrackingDisabled: Bool = false, sessionTimeout: TimeInterval = 0, firebaseConfigPath: String? = nil) {
+    public init(application: String,
+                instance: String = "default",
+                isDevelopment: Bool = true,
+                isDisabled: Bool = true,
+                isSessionTrackingDisabled: Bool = false,
+                isSendingSessionStartEvents: Bool = true,
+                sessionTimeout: TimeInterval = 0,
+                firebaseConfigPath: String? = nil
+    ) {
         let log = Logger(subsystem: logSubsystem, category: "init")
         
         var filePath: String? = firebaseConfigPath
@@ -62,6 +74,7 @@ public class Boop {
         self.instance = instance
         self.sessionTimeout = sessionTimeout
         self.isSessionTrackingDisabled = isSessionTrackingDisabled
+        self.isSendingSessionStartEvents = isSendingSessionStartEvents
         self.didSessionStart = self.isSessionTrackingDisabled
     }
     
@@ -117,7 +130,7 @@ public class Boop {
         let value = Int(self.sessionTimeout * 1000)
         self.sessionStart = Date()
         self.didSessionStart = true
-        return self.trackEvent(event: "Session Start", label: label, value: value)
+        return self.isSendingSessionStartEvents ? self.trackEvent(event: "Session Start", label: label, value: value) : nil
     }
     
     public func trackSessionStop() -> DocumentReference? {
