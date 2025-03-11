@@ -51,6 +51,53 @@ final class BoopTests: XCTestCase {
         XCTAssertEqual(inputValue, outputValue)
     }
     
+    func testCodableValue() async throws {
+        TEST?.isSessionTrackingDisabled = true
+        let inputEvent = "testCodableValues"
+
+       let dictRef = TEST?.trackEvent(event: inputEvent, label: "Dict", value: ["leopard": 1, "gecko": 2])
+       let dictDoc = try await dictRef!.getDocument()
+       XCTAssertNotNil(dictDoc)
+       let dictData = dictDoc.data()
+       XCTAssertNotNil(dictData)
+       let dictValue: [String: Int] = dictData!["value"] as! [String: Int]
+       XCTAssertEqual(dictValue["leopard"], 1)
+       XCTAssertEqual(dictValue["gecko"], 2)
+       
+       let arrayRef = TEST?.trackEvent(event: inputEvent, label: "Array", value: ["leopard", "gecko"])
+       let arrayDoc = try await arrayRef!.getDocument()
+       XCTAssertNotNil(arrayDoc)
+       let arrayData = arrayDoc.data()
+       XCTAssertNotNil(arrayData)
+       let arrayValue: [String] = arrayData!["value"] as! [String]
+       XCTAssertEqual(arrayValue[0], "leopard")
+       XCTAssertEqual(arrayValue[1], "gecko")
+
+       let intRef = TEST?.trackEvent(event: inputEvent, label: "Int", value: 42)
+       let intDoc = try await intRef!.getDocument()
+       XCTAssertNotNil(intDoc)
+       let intData = intDoc.data()
+       XCTAssertNotNil(intData)
+       let intValue: Int = intData!["value"] as! Int
+       XCTAssertEqual(intValue, 42)
+
+       let doubleRef = TEST?.trackEvent(event: inputEvent, label: "Double", value: 42.0)
+       let doubleDoc = try await doubleRef!.getDocument()
+       XCTAssertNotNil(doubleDoc)
+       let doubleData = doubleDoc.data()
+       XCTAssertNotNil(doubleData)
+       let doubleValue: Double = doubleData!["value"] as! Double
+       XCTAssertEqual(doubleValue, 42.0)
+       
+       let stringRef = TEST?.trackEvent(event: inputEvent, label: "String", value: "leopard gecko")
+       let stringDoc = try await stringRef!.getDocument()
+       XCTAssertNotNil(stringDoc)
+       let stringData = stringDoc.data()
+       XCTAssertNotNil(stringData)
+       let stringValue: String = stringData!["value"] as! String
+       XCTAssertEqual(stringValue, "leopard gecko")
+    }
+    
     func testAppLaunch() async throws {
         let ref = TEST?.trackAppLaunch()
         
