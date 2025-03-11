@@ -14,18 +14,14 @@ final class BoopTests: XCTestCase {
         let path = bundle.path(forResource: "GoogleService-Info", ofType: "plist")
         XCTAssertNotNil(path)
         
-        if TEST == nil {
-            TEST = Boop(
-                application: "sticky-boop-swift",
-                instance: "xcode-test",
-                isDevelopment: true,
-                isDisabled: false,
-                firebaseConfigPath: path
-            )
-        }
-        let settings = FirestoreSettings()
-        settings.cacheSettings = MemoryCacheSettings()
-        Firestore.firestore().settings = settings
+        TEST = nil
+        TEST = Boop(
+            application: "sticky-boop-swift",
+            instance: "xcode-test",
+            isDevelopment: true,
+            isDisabled: false,
+            firebaseConfigPath: path
+        )
         Firestore.firestore().clearPersistence()
     }
     
