@@ -14,18 +14,14 @@ final class BoopTests: XCTestCase {
         let path = bundle.path(forResource: "GoogleService-Info", ofType: "plist")
         XCTAssertNotNil(path)
         
-        if TEST == nil {
-            TEST = Boop(
-                application: "sticky-boop-swift",
-                instance: "xcode-test",
-                isDevelopment: true,
-                isDisabled: false,
-                firebaseConfigPath: path
-            )
-        }
-        let settings = FirestoreSettings()
-        settings.cacheSettings = MemoryCacheSettings()
-        Firestore.firestore().settings = settings
+        TEST = nil
+        TEST = Boop(
+            application: "sticky-boop-swift",
+            instance: "xcode-test",
+            isDevelopment: true,
+            isDisabled: false,
+            firebaseConfigPath: path
+        )
         Firestore.firestore().clearPersistence()
     }
     
@@ -35,7 +31,6 @@ final class BoopTests: XCTestCase {
         let inputLabel = UUID().uuidString
         let inputValue = UUID().uuidString
         
-        TEST?.isSessionTrackingDisabled = false
         TEST?.didSessionStart = true
         let ref = TEST?.trackEvent(event: inputEvent, label: inputLabel, value: inputValue)
         
@@ -70,8 +65,6 @@ final class BoopTests: XCTestCase {
     }
     
     func testSessionStart() async throws {
-        TEST?.isSessionTrackingDisabled = false
-        TEST?.didSessionStart = false
         let ref = TEST?.trackSessionStart()
         
         let document = try await ref!.getDocument()
@@ -86,14 +79,11 @@ final class BoopTests: XCTestCase {
     
     func testSessionStartSilent() async throws {
         TEST?.isSendingSessionStartEvents = false
-        TEST?.isSessionTrackingDisabled = false
-        TEST?.didSessionStart = false
         let ref = TEST?.trackSessionStart()
         XCTAssertNil(ref)
     }
     
     func testSessionStop() async throws {
-        TEST?.isSessionTrackingDisabled = false
         TEST?.didSessionStart = true
         let ref = TEST?.trackSessionStop()
         
@@ -110,8 +100,6 @@ final class BoopTests: XCTestCase {
     
     /// Simulates 2 sessions. Each start and stop of a session should have the same `sessionId`, but the `sessionId` between 2 sessions should be different
     func testSessionId() async throws {
-        TEST?.isSessionTrackingDisabled = false
-        TEST?.didSessionStart = false
         let startRef = TEST?.trackSessionStart()
         let startDoc = try await startRef!.getDocument()
         XCTAssertNotNil(startDoc)
@@ -197,7 +185,6 @@ final class BoopTests: XCTestCase {
     }
     
     func testSessionDuration() async throws {
-        TEST?.isSessionTrackingDisabled = false
         let startRef = TEST?.trackSessionStart()
         XCTAssertNotNil(startRef)
         
@@ -222,4 +209,39 @@ final class BoopTests: XCTestCase {
         XCTAssertNotNil(durationMs)
         XCTAssertGreaterThanOrEqual(durationMs ?? 0, 1000.0)
     }
+    
+    func testSessionFlop() async throws {
+        let minimum = 1.0
+        TEST?.minimumViableSessionDuration = minimum
+                
+        let startRef = TEST?.trackSessionStart()
+        XCTAssertNotNil(startRef)
+        try await Task.sleep(until: .now + .seconds(minimum * 0.5))
+        let flopRef = TEST?.trackSessionStop()
+        XCTAssertNotNil(flopRef)
+        let flopDoc = try await flopRef!.getDocument()
+        XCTAssertNotNil(flopDoc)
+        let flopData = flopDoc.data()
+        XCTAssertNotNil(flopData)
+        let flopEvent = flopData?["event"] as! String
+        XCTAssertEqual("Session Flop", flopEvent)
+        
+        let duration = minimum + 0.1
+        let startRef2 = TEST?.trackSessionStart()
+        XCTAssertNotNil(startRef2)
+        try await Task.sleep(until: .now + .seconds(duration))
+        let stopRef = TEST?.trackSessionStop()
+        XCTAssertNotNil(stopRef)
+        let stopDoc = try await stopRef!.getDocument()
+        XCTAssertNotNil(stopDoc)
+        let stopData = stopDoc.data()
+        XCTAssertNotNil(stopData)
+        let stopEvent = stopData?["event"] as! String
+        XCTAssertEqual("Session Stop", stopEvent)
+        
+        let durationMs = stopData?["value"] as? Int
+        XCTAssertNotNil(durationMs)
+        XCTAssertGreaterThanOrEqual(Double(durationMs ?? 0), duration)
+    }
 }
+
