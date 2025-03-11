@@ -31,7 +31,6 @@ final class BoopTests: XCTestCase {
         let inputLabel = UUID().uuidString
         let inputValue = UUID().uuidString
         
-        TEST?.isSessionTrackingDisabled = false
         TEST?.didSessionStart = true
         let ref = TEST?.trackEvent(event: inputEvent, label: inputLabel, value: inputValue)
         
@@ -66,9 +65,6 @@ final class BoopTests: XCTestCase {
     }
     
     func testSessionStart() async throws {
-        TEST?.isSessionTrackingDisabled = false
-        TEST?.didSessionStart = false
-        TEST?.isSendingSessionStartEvents = true
         let ref = TEST?.trackSessionStart()
         
         let document = try await ref!.getDocument()
@@ -83,14 +79,11 @@ final class BoopTests: XCTestCase {
     
     func testSessionStartSilent() async throws {
         TEST?.isSendingSessionStartEvents = false
-        TEST?.isSessionTrackingDisabled = false
-        TEST?.didSessionStart = false
         let ref = TEST?.trackSessionStart()
         XCTAssertNil(ref)
     }
     
     func testSessionStop() async throws {
-        TEST?.isSessionTrackingDisabled = false
         TEST?.didSessionStart = true
         let ref = TEST?.trackSessionStop()
         
@@ -107,8 +100,6 @@ final class BoopTests: XCTestCase {
     
     /// Simulates 2 sessions. Each start and stop of a session should have the same `sessionId`, but the `sessionId` between 2 sessions should be different
     func testSessionId() async throws {
-        TEST?.isSessionTrackingDisabled = false
-        TEST?.didSessionStart = false
         let startRef = TEST?.trackSessionStart()
         let startDoc = try await startRef!.getDocument()
         XCTAssertNotNil(startDoc)
@@ -194,7 +185,6 @@ final class BoopTests: XCTestCase {
     }
     
     func testSessionDuration() async throws {
-        TEST?.isSessionTrackingDisabled = false
         let startRef = TEST?.trackSessionStart()
         XCTAssertNotNil(startRef)
         
@@ -222,7 +212,6 @@ final class BoopTests: XCTestCase {
     
     func testSessionFlop() async throws {
         let minimum = 1.0
-        TEST?.isSessionTrackingDisabled = false
         TEST?.minimumViableSessionDuration = minimum
                 
         let startRef = TEST?.trackSessionStart()
