@@ -187,6 +187,7 @@ public class Boop {
                 return nil
             }
             event = "Session Flop"
+            label += " (below minimum threshold)"
         }
         return self.trackEvent(event: event, label: label, value: value, isUserInitiated: false)
     }
