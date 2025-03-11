@@ -25,8 +25,16 @@ public class Boop {
     ///
     /// Defaults to `true` meaning the session start events are sent to Firebase. If `false`, you should still call ``trackSessionStart()`` in order to get a recording of the session duration when ``trackSessionStop()`` is called.
     public var isSendingSessionStartEvents: Bool
+    /// Toggles whether or not to actually send "Session Flop" events to Firebase
+    ///
+    /// Defaults to `true` meaning that sessions which do not exceed the minimum duration threshold from ``minimumViableSessionDuration`` will send flop events to Firebase. If `false`, flop events are not tracked.
+    public var isSendingSessionFlopEvents: Bool
     /// Set this value to automatically subtract the duration of an inactivity timeout when booping sessions. Defaults to `0`.
     public var sessionTimeout: TimeInterval
+    /// If set, the "Session Stop" event will be replaced with "Session Flop" if the session duration is less than this value (in seconds).
+    ///
+    /// See: ``isSendingSessionFlopEvents`` for configuring whether or not to report these types
+    public var minimumViableSessionDuration: TimeInterval?
     /// This value is internally flipped during the very first user-initiated event in order to ensure the first session (after app launch) includes a starting boop.
     ///
     /// You can enable it immediately after instantiating Boop in order to prevent this "first session start" behavior. Disabling session boops with ``isSessionTrackingDisabled`` will also prevent the "first session start" behavior.
@@ -49,7 +57,9 @@ public class Boop {
                 isDisabled: Bool = true,
                 isSessionTrackingDisabled: Bool = false,
                 isSendingSessionStartEvents: Bool = true,
+                isSendingSessionFlopEvents: Bool = true,
                 sessionTimeout: TimeInterval = 0,
+                minimumViableSessionDuration: TimeInterval? = nil,
                 firebaseConfigPath: String? = nil
     ) {
         let log = Logger(subsystem: logSubsystem, category: "init")
@@ -81,8 +91,10 @@ public class Boop {
         self.isDisabled = isDisabled
         self.instance = instance
         self.sessionTimeout = sessionTimeout
+        self.minimumViableSessionDuration = minimumViableSessionDuration
         self.isSessionTrackingDisabled = isSessionTrackingDisabled
         self.isSendingSessionStartEvents = isSendingSessionStartEvents
+        self.isSendingSessionFlopEvents = isSendingSessionFlopEvents
         self.didSessionStart = self.isSessionTrackingDisabled
     }
     
@@ -164,7 +176,18 @@ public class Boop {
             label += " (minus Timeout delay)"
         }
         
-        let value = Int(self.currentSessionDuration * 1000)
-        return self.trackEvent(event: "Session Stop", label: label, value: value, isUserInitiated: false)
+        let duration = self.currentSessionDuration
+        let value = Int(duration * 1000)
+        
+        var event = "Session Stop"
+        if let minimumDuration = self.minimumViableSessionDuration, duration < minimumDuration {
+            if !isSendingSessionFlopEvents {
+                let log = Logger(subsystem: logSubsystem, category: "trackSessionStop")
+                log.warning("Session duration is below minimumViableSessionDuration, but isSendingSessionFlopEvents is false. Skipping Session Flop event.")
+                return nil
+            }
+            event = "Session Flop"
+        }
+        return self.trackEvent(event: event, label: label, value: value, isUserInitiated: false)
     }
 }
