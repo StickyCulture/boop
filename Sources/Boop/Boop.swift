@@ -2,8 +2,8 @@ import os
 import Firebase
 
 public class Boop {
-    private var db: Firestore
-    private var collection: String {
+    public var db: Firestore
+    public var collection: String {
         var name = self.application
         if self.isDevelopment {
             name += "-dev"
